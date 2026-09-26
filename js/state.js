@@ -158,9 +158,12 @@ function expensesByCategory(monthKey) {
     .sort((a, b) => b.total - a.total);
 }
 
-/** Saldo acumulado dia a dia, para o gráfico de evolução patrimonial. */
-function balanceSeries(days) {
-  const today = new Date();
+/**
+ * Saldo acumulado dia a dia, para o gráfico de evolução patrimonial.
+ * `today` é injetável para permitir testes determinísticos.
+ */
+function balanceSeries(days, today = new Date()) {
+  today = new Date(today);
   today.setHours(12, 0, 0, 0);
   const points = [];
   for (let offset = days - 1; offset >= 0; offset -= 1) {
@@ -178,8 +181,7 @@ function balanceSeries(days) {
 }
 
 /** Receita x despesa dos últimos N meses, para o gráfico de barras. */
-function incomeExpenseByMonth(months) {
-  const today = new Date();
+function incomeExpenseByMonth(months, today = new Date()) {
   const buckets = [];
   for (let offset = months - 1; offset >= 0; offset -= 1) {
     const date = new Date(today.getFullYear(), today.getMonth() - offset, 1);
@@ -196,6 +198,6 @@ function budgetUsage(budget) {
   return { spent, remaining: budget.limit - spent, percent: budget.limit > 0 ? (spent / budget.limit) * 100 : 0 };
 }
 
-function currentMonthKey() {
-  return toMonthKey(new Date());
+function currentMonthKey(today = new Date()) {
+  return toMonthKey(today);
 }

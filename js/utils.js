@@ -59,15 +59,35 @@ function formatCurrency(value, currency = "BRL", { compact = false } = {}) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(amount);
 }
 
-/** Converte o texto digitado no campo de valor para number. Aceita "1.234,56" e "1234.56". */
+/**
+ * Converte o texto digitado no campo de valor para number.
+ *
+ * Aceita "1.234,56" (pt-BR), "1234.56" (en-US) e "R$ 89,90". O caso traiçoeiro
+ * é o ponto sem vírgula: "1.000" é milhar para um brasileiro, mas a leitura
+ * ingênua devolveria 1. Resolve-se pelo tamanho do último grupo: três dígitos
+ * é separador de milhar ("1.000" -> 1000, "12.345" -> 12345), qualquer outra
+ * quantidade é decimal ("1.5" -> 1.5, "0.75" -> 0.75).
+ */
 function parseAmount(raw) {
   if (typeof raw === "number") return Number.isFinite(raw) ? raw : NaN;
   let text = String(raw ?? "").trim().replace(/[^\d,.-]/g, "");
   if (!text) return NaN;
-  // Se tem ponto E vírgula, o ponto é separador de milhar.
-  if (text.includes(",") && text.includes(".")) text = text.replace(/\./g, "").replace(",", ".");
-  // Se só tem vírgula, ela é o separador decimal (padrão pt-BR).
-  else if (text.includes(",")) text = text.replace(",", ".");
+
+  const hasComma = text.includes(",");
+  const hasDot = text.includes(".");
+
+  if (hasComma && hasDot) {
+    // "1.234,56": ponto é milhar, vírgula é decimal.
+    text = text.replace(/\./g, "").replace(",", ".");
+  } else if (hasComma) {
+    // "12,50": vírgula é o decimal (padrão pt-BR).
+    text = text.replace(",", ".");
+  } else if (hasDot) {
+    // Só pontos: decide pelo tamanho do último grupo.
+    const lastGroup = text.split(".").at(-1);
+    text = lastGroup.length === 3 ? text.replace(/\./g, "") : text;
+  }
+
   const value = Number.parseFloat(text);
   return Number.isFinite(value) ? value : NaN;
 }

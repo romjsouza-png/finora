@@ -1,0 +1,16 @@
+{
+  "name": "finora",
+  "version": "2.0.0",
+  "description": "Controle financeiro pessoal: lançamentos, orçamento, metas e contas. HTML/CSS/JS puro.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "test:watch": "node --test --watch \"tests/*.test.js\"",
+    "serve": "node --run serve:impl",
+    "serve:impl": "python -m http.server 8000"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

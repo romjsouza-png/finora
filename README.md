@@ -24,6 +24,29 @@ os dados guardados no `localStorage` do seu próprio dispositivo.
 Extras: tema claro/escuro, dados de exemplo no primeiro acesso, deep link por
 URL (`#budget`, `#goals`…), responsivo e navegável por teclado.
 
+## Testes
+
+```bash
+npm test
+```
+
+72 testes cobrindo a matemática financeira, o parsing de datas e valores, a
+persistência e o login. Rodam em ~350 ms no `node:test` embutido — **sem
+dependências, sem framework, sem `npm install`**.
+
+Os testes exercitam os módulos reais, carregados num contexto `vm` (ver
+`tests/helper.js`), e incluem regressões dos bugs já corrigidos:
+
+| Arquivo | Cobre |
+|---|---|
+| `datas.test.js` | Regressão do fuso horário: datas locais, não UTC. Inclui um caso para cada hora do dia, porque o bug só aparecia depois das 21h (UTC-3) |
+| `state.test.js` | Saldo derivado, totais mensais, agrupamento por categoria, uso de orçamento. Inclui casos de invariante: o saldo não pode dessincronizar ao editar ou excluir |
+| `utils.test.js` | `parseAmount` nos formatos pt-BR e en-US, escape de HTML, formatação de moeda, ids |
+| `storage-auth.test.js` | `localStorage` com falha simulada (quota, modo privativo, JSON corrompido), hash de senha, sessão expirada, isolamento entre usuários |
+
+O bug de UTC tem um teste dedicado porque é o tipo de defeito que passa
+despercebido ao usar o app: o número sai certo, o dia é que está errado.
+
 ## Stack
 
 HTML5 + CSS3 + JavaScript ES6+ puro. **Zero dependências, zero build.**
