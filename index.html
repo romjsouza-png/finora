@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Finora — controle financeiro pessoal com lançamentos, orçamento, metas e contas." />
+    <meta name="color-scheme" content="light dark" />
+    <title>Finora | Controle financeiro</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="css/app.css" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#page-title">Pular para o conteúdo</a>
+
+    <!-- ======================================================= TELA DE LOGIN -->
+    <section id="auth-view" class="login-view">
+      <div class="login-decoration login-decoration-top"></div>
+      <div class="login-decoration login-decoration-bottom"></div>
+
+      <div class="login-shell">
+        <aside class="login-visual" aria-hidden="true">
+          <div class="brand"><span class="brand-mark"><i class="fa-solid fa-chart-pie"></i></span><span>finora</span></div>
+          <div class="visual-badge">Financeiro inteligente</div>
+          <h2>Organize seu dinheiro com clareza e segurança.</h2>
+          <p>Lançamentos, orçamento, metas e contas em um só lugar — tudo salvo no seu navegador.</p>
+          <ul class="login-benefits">
+            <li><i class="fa-solid fa-check"></i> Receitas e despesas com saldo consolidado</li>
+            <li><i class="fa-solid fa-check"></i> Orçamentos por categoria e metas de economia</li>
+            <li><i class="fa-solid fa-check"></i> Relatórios e exportação para Excel</li>
+          </ul>
+        </aside>
+
+        <div class="login-card">
+          <div class="brand brand-centered"><span class="brand-mark"><i class="fa-solid fa-chart-pie"></i></span><span>finora</span></div>
+
+          <div class="auth-tabs" role="tablist" aria-label="Escolha entre entrar e criar conta">
+            <button class="auth-tab active" type="button" data-auth-mode="login" role="tab" aria-pressed="true">Entrar</button>
+            <button class="auth-tab" type="button" data-auth-mode="register" role="tab" aria-pressed="false">Criar conta</button>
+          </div>
+
+          <p class="login-kicker">Bem-vindo</p>
+          <h1 id="auth-title">Acesse sua conta</h1>
+          <p class="login-copy" id="auth-subtitle">Bem-vindo de volta ao seu controle financeiro.</p>
+
+          <form id="auth-login-form" novalidate>
+            <div class="field">
+              <label for="login-email">E-mail</label>
+              <div class="input-icon">
+                <i class="fa-regular fa-envelope"></i>
+                <input id="login-email" type="email" autocomplete="email" placeholder="voce@email.com" required />
+              </div>
+            </div>
+            <div class="field">
+              <label for="login-password">Senha</label>
+              <div class="input-icon">
+                <i class="fa-solid fa-lock"></i>
+                <input id="login-password" type="password" autocomplete="current-password" placeholder="Sua senha" required />
+              </div>
+            </div>
+            <p class="form-error auth-error" role="alert"></p>
+            <button class="button button-primary button-full" type="submit">Entrar <i class="fa-solid fa-arrow-right"></i></button>
+          </form>
+
+          <form id="auth-register-form" class="is-hidden" novalidate>
+            <div class="field">
+              <label for="register-name">Nome completo</label>
+              <div class="input-icon">
+                <i class="fa-regular fa-user"></i>
+                <input id="register-name" type="text" autocomplete="name" placeholder="Seu nome" required />
+              </div>
+            </div>
+            <div class="field">
+              <label for="register-email">E-mail</label>
+              <div class="input-icon">
+                <i class="fa-regular fa-envelope"></i>
+                <input id="register-email" type="email" autocomplete="email" placeholder="voce@email.com" required />
+              </div>
+            </div>
+            <div class="field">
+              <label for="register-password">Senha</label>
+              <div class="input-icon">
+                <i class="fa-solid fa-lock"></i>
+                <input id="register-password" type="password" autocomplete="new-password" placeholder="Mínimo de 6 caracteres" minlength="6" required />
+              </div>
+            </div>
+            <div class="field">
+              <label for="register-confirm">Confirmar senha</label>
+              <div class="input-icon">
+                <i class="fa-solid fa-lock"></i>
+                <input id="register-confirm" type="password" autocomplete="new-password" placeholder="Repita a senha" required />
+              </div>
+            </div>
+            <p class="form-error auth-error" role="alert"></p>
+            <button class="button button-primary button-full" type="submit">Criar conta <i class="fa-solid fa-arrow-right"></i></button>
+            <p class="demo-hint">Ao criar a conta, o app popula um mês de dados de exemplo para você explorar.</p>
+          </form>
+
+          <p class="privacy-note">
+            <i class="fa-solid fa-shield-halved"></i>
+            Seus dados ficam apenas neste navegador. Não há servidor nem rastreamento.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================== APP -->
+    <div id="app-view" class="app-shell is-hidden">
+      <div class="sidebar-scrim is-hidden" aria-hidden="true"></div>
+
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-mark"><i class="fa-solid fa-chart-pie"></i></span><span>finora</span></div>
+
+        <nav class="main-nav" aria-label="Navegação principal">
+          <p class="nav-title">Principal</p>
+          <a class="nav-item" href="#dashboard" data-route="dashboard"><i class="fa-solid fa-grid-2"></i>Visão geral</a>
+          <a class="nav-item" href="#transactions" data-route="transactions"><i class="fa-solid fa-arrow-right-arrow-left"></i>Lançamentos</a>
+          <a class="nav-item" href="#statement" data-route="statement"><i class="fa-solid fa-receipt"></i>Extrato</a>
+          <p class="nav-title">Planejamento</p>
+          <a class="nav-item" href="#budget" data-route="budget"><i class="fa-solid fa-bullseye"></i>Orçamento</a>
+          <a class="nav-item" href="#goals" data-route="goals"><i class="fa-solid fa-rocket"></i>Metas</a>
+          <p class="nav-title">Configurações</p>
+          <a class="nav-item" href="#accounts" data-route="accounts"><i class="fa-solid fa-building-columns"></i>Contas</a>
+          <a class="nav-item" href="#profile" data-route="profile"><i class="fa-solid fa-user"></i>Perfil</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="help-box">
+            <i class="fa-regular fa-circle-question"></i>
+            <strong>Seus dados, seu controle</strong>
+            <span>Exporte um backup JSON na aba Perfil.</span>
+          </div>
+          <button id="logout-button" class="nav-item logout-button" type="button">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>Sair
+          </button>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button id="menu-toggle" class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="topbar-title">
+            <h1 id="page-title">Visão geral</h1>
+            <div class="topbar-date"><i class="fa-regular fa-calendar"></i><span id="current-date"></span></div>
+          </div>
+          <div class="topbar-actions">
+            <button id="theme-toggle" class="icon-button" type="button" aria-label="Alternar tema"><i class="fa-solid fa-moon"></i></button>
+            <button id="header-new-transaction" class="button button-primary" type="button"><i class="fa-solid fa-plus"></i> Novo lançamento</button>
+            <div class="profile">
+              <div class="avatar" id="avatar">?</div>
+              <div class="profile-text">
+                <strong id="topbar-name">—</strong>
+                <span id="topbar-email">—</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="page-content">
+          <!-- ---------------------------------------------------- DASHBOARD -->
+          <section class="view" data-view="dashboard">
+            <div class="stats-grid">
+              <article class="stat-card stat-card-featured">
+                <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
+                <div class="stat-label">Saldo total</div>
+                <strong id="stat-balance" class="stat-value">R$ 0,00</strong>
+                <span class="stat-note">Consolidado em todas as contas</span>
+              </article>
+              <article class="stat-card">
+                <div class="stat-icon green"><i class="fa-solid fa-arrow-down-long"></i></div>
+                <div class="stat-label">Receitas do mês</div>
+                <strong id="stat-income" class="stat-value is-income">R$ 0,00</strong>
+                <span id="stat-income-note" class="stat-note">—</span>
+              </article>
+              <article class="stat-card">
+                <div class="stat-icon red"><i class="fa-solid fa-arrow-up-long"></i></div>
+                <div class="stat-label">Despesas do mês</div>
+                <strong id="stat-expense" class="stat-value is-expense">R$ 0,00</strong>
+                <span id="stat-expense-trend" class="stat-trend neutral"><i class="fa-solid fa-minus"></i> sem variação</span>
+              </article>
+              <article class="stat-card">
+                <div class="stat-icon purple"><i class="fa-solid fa-scale-balanced"></i></div>
+                <div class="stat-label">Resultado do mês</div>
+                <strong id="stat-result" class="stat-value">R$ 0,00</strong>
+                <span id="stat-result-trend" class="stat-trend neutral"><i class="fa-solid fa-minus"></i> sem variação</span>
+              </article>
+            </div>
+
+            <div class="stats-grid stats-grid-secondary">
+              <article class="stat-card stat-card-compact">
+                <div class="stat-label">Categoria mais gasta</div>
+                <strong id="stat-top-category" class="stat-value-sm">—</strong>
+                <span id="stat-top-category-total" class="stat-note">Nenhum registro no mês</span>
+              </article>
+              <article class="stat-card stat-card-compact">
+                <div class="stat-label">Lançamentos</div>
+                <strong id="stat-count" class="stat-value-sm">0</strong>
+                <span class="stat-note">Total acumulado</span>
+              </article>
+            </div>
+
+            <div class="charts-grid">
+              <article class="panel chart-panel">
+                <div class="panel-heading">
+                  <div><h2>Despesas por categoria</h2><p>Mês corrente</p></div>
+                </div>
+                <div class="donut-wrap">
+                  <canvas id="category-chart" role="img" aria-label="Gráfico de despesas por categoria"></canvas>
+                </div>
+              </article>
+              <article class="panel chart-panel">
+                <div class="panel-heading">
+                  <div><h2>Receitas x despesas</h2><p>Últimos 6 meses</p></div>
+                </div>
+                <div class="chart-box"><canvas id="income-expense-chart" role="img" aria-label="Gráfico de receitas e despesas por mês"></canvas></div>
+              </article>
+              <article class="panel chart-panel chart-panel-wide">
+                <div class="panel-heading">
+                  <div><h2>Evolução do saldo</h2><p>Últimos 30 dias</p></div>
+                </div>
+                <div class="chart-box"><canvas id="balance-chart" role="img" aria-label="Gráfico de evolução do saldo"></canvas></div>
+              </article>
+            </div>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <div><h2>Últimos lançamentos</h2><p>Movimentações mais recentes do mês</p></div>
+                <button class="button button-ghost" type="button" data-goto="transactions">Ver todos <i class="fa-solid fa-arrow-right"></i></button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <caption class="sr-only">Últimos lançamentos do mês corrente</caption>
+                  <thead><tr><th scope="col">Descrição</th><th scope="col">Conta</th><th scope="col">Data</th><th scope="col">Valor</th><th scope="col"><span class="sr-only">Ações</span></th></tr></thead>
+                  <tbody id="dashboard-recent-body"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+
+          <!-- -------------------------------------------------- LANÇAMENTOS -->
+          <section class="view is-hidden" data-view="transactions">
+            <section class="panel">
+              <div class="panel-heading">
+                <div><h2>Lançamentos</h2><p id="transactions-count">0 lançamentos</p></div>
+                <div class="panel-actions">
+                  <span id="transactions-total" class="stat-note"></span>
+                  <button id="transactions-new" class="button button-primary" type="button"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                </div>
+              </div>
+
+              <div class="filters">
+                <div class="tabs">
+                  <button class="txn-tab active" type="button" data-type="all">Todos</button>
+                  <button class="txn-tab" type="button" data-type="income">Receitas</button>
+                  <button class="txn-tab" type="button" data-type="expense">Despesas</button>
+                </div>
+                <div class="search-box">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input id="transaction-search" type="search" placeholder="Buscar por descrição, categoria ou conta…" aria-label="Buscar lançamentos" />
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <caption class="sr-only">Lista de lançamentos</caption>
+                  <thead><tr><th scope="col">Descrição</th><th scope="col">Conta</th><th scope="col">Data</th><th scope="col">Valor</th><th scope="col"><span class="sr-only">Ações</span></th></tr></thead>
+                  <tbody id="transactions-body"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+
+          <!-- ------------------------------------------------------ EXTRATO -->
+          <section class="view is-hidden" data-view="statement">
+            <section class="panel">
+              <div class="panel-heading">
+                <div><h2>Extrato</h2><p id="statement-count">0 registros</p></div>
+                <div class="panel-actions">
+                  <button id="statement-export" class="button button-secondary" type="button"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+                </div>
+              </div>
+
+              <div class="statement-summary">
+                <div><span>Entradas</span><strong id="statement-in">R$ 0,00</strong></div>
+                <div><span>Saídas</span><strong id="statement-out">R$ 0,00</strong></div>
+                <div><span>Resultado</span><strong id="statement-net">R$ 0,00</strong></div>
+              </div>
+
+              <div class="filters filters-wrap">
+                <div class="search-box">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input id="statement-search" type="search" placeholder="Buscar no extrato…" aria-label="Buscar no extrato" />
+                </div>
+                <select id="statement-type" aria-label="Filtrar por tipo">
+                  <option value="">Todos os tipos</option>
+                  <option value="income">Receitas</option>
+                  <option value="expense">Despesas</option>
+                </select>
+                <select id="statement-account" aria-label="Filtrar por conta"><option value="">Todas as contas</option></select>
+                <div class="date-filter">
+                  <input id="statement-from" type="date" aria-label="Data inicial" />
+                  <span>até</span>
+                  <input id="statement-to" type="date" aria-label="Data final" />
+                </div>
+                <button id="statement-clear" class="clear-filters" type="button">Limpar</button>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <caption class="sr-only">Extrato de lançamentos</caption>
+                  <thead><tr><th scope="col">Descrição</th><th scope="col">Conta</th><th scope="col">Data</th><th scope="col">Valor</th><th scope="col"><span class="sr-only">Ações</span></th></tr></thead>
+                  <tbody id="statement-body"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+
+          <!-- ---------------------------------------------------- ORÇAMENTO -->
+          <section class="view is-hidden" data-view="budget">
+            <section class="panel">
+              <div class="panel-heading">
+                <div><h2>Orçamento mensal</h2><p id="budget-summary">—</p></div>
+                <input id="budget-month" class="compact-select" type="month" aria-label="Mês de referência" />
+              </div>
+              <div class="card-grid" id="budget-list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading"><div><h2>Novo orçamento</h2><p>Defina um limite para uma categoria</p></div></div>
+              <form id="budget-form" class="inline-form">
+                <div class="field">
+                  <label for="budget-category">Categoria</label>
+                  <select id="budget-category" required></select>
+                </div>
+                <div class="field">
+                  <label for="budget-limit">Limite</label>
+                  <div class="currency-input"><span>R$</span><input id="budget-limit" inputmode="decimal" placeholder="0,00" required /></div>
+                </div>
+                <button id="budget-submit" class="button button-primary" type="submit">Adicionar</button>
+              </form>
+            </section>
+          </section>
+
+          <!-- -------------------------------------------------------- METAS -->
+          <section class="view is-hidden" data-view="goals">
+            <section class="panel">
+              <div class="panel-heading">
+                <div><h2>Metas de economia</h2><p id="goals-summary">—</p></div>
+              </div>
+              <div class="card-grid" id="goals-list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading"><div><h2>Nova meta</h2><p>Defina um objetivo e acompanhe o progresso</p></div></div>
+              <form id="goal-form" class="form-grid">
+                <div class="field">
+                  <label for="goal-name">Nome da meta</label>
+                  <input id="goal-name" type="text" placeholder="Ex.: Viagem em dezembro" maxlength="60" required />
+                </div>
+                <div class="field">
+                  <label for="goal-target">Valor-alvo</label>
+                  <div class="currency-input"><span>R$</span><input id="goal-target" inputmode="decimal" placeholder="0,00" required /></div>
+                </div>
+                <div class="field">
+                  <label for="goal-saved">Já guardado</label>
+                  <div class="currency-input"><span>R$</span><input id="goal-saved" inputmode="decimal" placeholder="0,00" /></div>
+                </div>
+                <div class="field">
+                  <label for="goal-deadline">Prazo</label>
+                  <input id="goal-deadline" type="date" />
+                </div>
+                <button class="button button-primary" type="submit">Criar meta</button>
+              </form>
+            </section>
+          </section>
+
+          <!-- ------------------------------------------------------- CONTAS -->
+          <section class="view is-hidden" data-view="accounts">
+            <section class="panel">
+              <div class="panel-heading">
+                <div><h2>Contas</h2><p>Saldo derivado dos lançamentos de cada conta</p></div>
+                <div class="panel-actions">
+                  <span class="stat-note">Total: <strong id="accounts-total">R$ 0,00</strong></span>
+                  <button id="accounts-new" class="button button-primary" type="button"><i class="fa-solid fa-plus"></i> Nova conta</button>
+                </div>
+              </div>
+              <div class="account-list" id="accounts-list"></div>
+            </section>
+          </section>
+
+          <!-- ------------------------------------------------------- PERFIL -->
+          <section class="view is-hidden" data-view="profile">
+            <div class="profile-grid">
+              <section class="panel">
+                <div class="panel-heading"><div><h2>Seus dados</h2><p>Como o Finora te chama</p></div></div>
+                <form id="profile-form">
+                  <div class="field">
+                    <label for="profile-name">Nome</label>
+                    <input id="profile-name" type="text" autocomplete="name" required />
+                  </div>
+                  <div class="field">
+                    <label for="profile-email">E-mail</label>
+                    <input id="profile-email" type="email" disabled />
+                    <small class="field-hint">O e-mail é a chave de acesso e não pode ser alterado.</small>
+                  </div>
+                  <div class="field">
+                    <label for="profile-currency">Moeda</label>
+                    <select id="profile-currency">
+                      <option value="BRL">Real brasileiro (R$)</option>
+                      <option value="USD">Dólar americano (US$)</option>
+                      <option value="EUR">Euro (€)</option>
+                    </select>
+                  </div>
+                  <p class="form-status" id="profile-storage-ok"></p>
+                  <button class="button button-primary" type="submit">Salvar alterações</button>
+                </form>
+              </section>
+
+              <section class="panel">
+                <div class="panel-heading"><div><h2>Conta e dados</h2><p>Backup e integridade</p></div></div>
+                <dl class="detail-list">
+                  <div><dt>Membro desde</dt><dd id="profile-joined">—</dd></div>
+                  <div><dt>Lançamentos</dt><dd id="profile-count">0</dd></div>
+                  <div><dt>Contas</dt><dd id="profile-accounts">0</dd></div>
+                </dl>
+                <p class="field-hint">
+                  Os dados vivem no <code>localStorage</code> deste navegador. Limpar os dados de navegação
+                  apaga tudo — exporte um backup antes.
+                </p>
+                <div class="panel-actions">
+                  <button id="profile-export" class="button button-secondary" type="button"><i class="fa-solid fa-download"></i> Exportar backup</button>
+                  <label class="button button-secondary" for="profile-import">
+                    <i class="fa-solid fa-upload"></i> Importar backup
+                  </label>
+                  <input id="profile-import" type="file" accept="application/json" class="sr-only" />
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <!-- ==================================================== MODAIS -->
+    <div id="transaction-modal" class="modal-backdrop is-hidden">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="transaction-modal-title">
+        <div class="modal-heading">
+          <div><p class="eyebrow">Movimentação</p><h2 id="transaction-modal-title">Novo lançamento</h2></div>
+          <button class="icon-button" type="button" data-close-modal aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="transaction-form">
+          <input id="transaction-id" type="hidden" />
+          <div class="type-switch" role="radiogroup" aria-label="Tipo do lançamento">
+            <label><input type="radio" name="txn-type-display" value="expense" checked /><span><i class="fa-solid fa-arrow-up-long"></i> Despesa</span></label>
+            <label><input type="radio" name="txn-type-display" value="income" /><span><i class="fa-solid fa-arrow-down-long"></i> Receita</span></label>
+          </div>
+          <input id="transaction-type" type="hidden" value="expense" />
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="transaction-description">Descrição</label>
+              <input id="transaction-description" type="text" placeholder="Ex.: Supermercado" maxlength="80" />
+            </div>
+            <div class="field">
+              <label for="transaction-amount">Valor</label>
+              <div class="currency-input"><span>R$</span><input id="transaction-amount" inputmode="decimal" placeholder="0,00" required /></div>
+            </div>
+            <div class="field">
+              <label for="transaction-category">Categoria</label>
+              <select id="transaction-category" required></select>
+            </div>
+            <div class="field">
+              <label for="transaction-date">Data</label>
+              <input id="transaction-date" type="date" required />
+            </div>
+            <div class="field field-full">
+              <label for="transaction-account">Conta</label>
+              <select id="transaction-account" required></select>
+            </div>
+            <label class="checkbox-row field-full">
+              <input id="transaction-recurring" type="checkbox" />
+              <span>Lançamento recorrente (aluguel, assinatura, salário)</span>
+            </label>
+          </div>
+          <p id="transaction-error" class="form-error" role="alert"></p>
+          <div class="modal-actions">
+            <button class="button button-secondary" type="button" data-close-modal>Cancelar</button>
+            <button class="button button-primary" type="submit">Salvar</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div id="account-modal" class="modal-backdrop is-hidden">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-modal-title">
+        <div class="modal-heading">
+          <div><p class="eyebrow">Organização</p><h2 id="account-modal-title">Nova conta</h2></div>
+          <button class="icon-button" type="button" data-close-modal aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="account-form">
+          <input id="account-id" type="hidden" />
+          <div class="form-grid">
+            <div class="field field-full">
+              <label for="account-name">Nome</label>
+              <input id="account-name" type="text" placeholder="Ex.: Nubank" maxlength="40" required />
+            </div>
+            <div class="field">
+              <label for="account-type">Tipo</label>
+              <select id="account-type" required></select>
+            </div>
+            <div class="field">
+              <label for="account-balance">Saldo inicial</label>
+              <div class="currency-input"><span>R$</span><input id="account-balance" inputmode="decimal" placeholder="0,00" /></div>
+            </div>
+            <div class="field field-full">
+              <label for="account-color">Cor</label>
+              <input id="account-color" type="color" value="#5b5ce2" />
+            </div>
+          </div>
+          <p class="field-hint">O saldo é recalculado a partir dos lançamentos; o valor aqui é apenas a base inicial.</p>
+          <div class="modal-actions">
+            <button class="button button-secondary" type="button" data-close-modal>Cancelar</button>
+            <button class="button button-primary" type="submit">Salvar</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/views/dashboard.js"></script>
+    <script src="js/views/transactions.js"></script>
+    <script src="js/views/budget.js"></script>
+    <script src="js/views/goals.js"></script>
+    <script src="js/views/accounts.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

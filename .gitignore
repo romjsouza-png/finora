@@ -1,0 +1,36 @@
+# Dependências
+node_modules/
+package-lock.json
+
+# Build / dist
+dist/
+build/
+*.min.js
+*.min.css
+
+# Ambiente
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# SO
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporários
+*.tmp
+*.bak
+*.orig
+*.rej

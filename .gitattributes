@@ -1,0 +1,20 @@
+# Normaliza fim de linha: LF no repositório, checkout nativo no working copy.
+# Sem isso, commits feitos no Windows gravam CRLF e o histórico fica com
+# ruído em toda alteração de linha.
+* text=auto eol=lf
+
+# Arquivos que devem preservar CRLF (o SO Windows depende deles)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binários
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+*.zip binary
