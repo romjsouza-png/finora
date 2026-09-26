@@ -23,22 +23,41 @@
   --chart-tick: #9aa3b4;
 }
 
+/* Contraste (WCAG AA) no tema claro.
+   Os tokens originais em styles.css foram escolhidos por estética e reprovam
+   em texto pequeno: --muted dava 3,76:1 e --green 3,19:1 sobre branco, ambos
+   abaixo de 4,5:1. Estes valores sobem para ~5:1 sem mudar a percepção de cor.
+   O tema escuro já passava e por isso não é redefinido aqui. */
+:root {
+  --text-muted: #667085;   /* 4,97:1 em vez de 3,76:1 */
+  --green: #0e7a56;        /* 5,33:1 em vez de 3,19:1 */
+  --red: #c62f3f;          /* 5,41:1 em vez de 3,81:1 */
+  --muted: #667085;        /* alias legado usado por styles.css */
+  --chart-tick: #667085;   /* 4,97:1: os eixos dos gráficos também são texto */
+}
+
 html[data-theme="dark"] {
   --surface: #161a2b;
   --surface-2: #1b2036;
   --surface-3: #232943;
   --text: #eef1f8;
-  --text-muted: #9aa3b8;
+  --text-muted: #a3abc0;
   --border: #2b3150;
   --shadow: 0 8px 28px rgba(0, 0, 0, .35);
   --shadow-lg: 0 25px 70px rgba(0, 0, 0, .5);
   --green: #35d39a;
   --red: #ff7285;
   --amber: #f0b429;
-  --primary: #7b76f5;
+  /* O roxo do tema escuro é usado em dois papéis incompatíveis: como fundo de
+     botão (com texto branco) e como cor de acento (sobre superfície escura).
+     O tom claro #7b76f5 dava 3,65:1 com branco — reprovado. Mantém-se o tom
+     escuro para fundo e um acento claro separado para texto. */
+  --primary: #4f46e5;        /* 6,29:1 com branco */
+  --accent-text: #a5a1ff;    /* 7,51:1 sobre a superfície escura */
+  --muted: #a3abc0;          /* alias legado de styles.css, 7,51:1 */
   --sidebar-bg: #121627;
   --chart-grid: #262c47;
-  --chart-tick: #7d87a3;
+  --chart-tick: #a3abc0;
 }
 
 html[data-theme="dark"] body { background: #0f1322; color: var(--text); }
@@ -60,7 +79,13 @@ html[data-theme="dark"] .icon-button:hover { background: var(--surface-3); color
 html[data-theme="dark"] .nav-item { color: var(--text-muted); }
 html[data-theme="dark"] .nav-item:hover { background: var(--surface-3); color: var(--text); }
 html[data-theme="dark"] .nav-item.active { background: var(--primary); color: #fff; }
-html[data-theme="dark"] .nav-title { color: #6f7893; }
+html[data-theme="dark"] .nav-title { color: #8b94ad; }
+/* O avatar usa o roxo como COR sobre um fundo lilás-claro herdado do tema
+   claro. No escuro esse fundo some, então o texto precisa virar branco sobre o
+   roxo do botão. */
+html[data-theme="dark"] .avatar { background: var(--primary); color: #fff; }
+/* botões e links que só mudam de cor precisam do acento claro no escuro */
+html[data-theme="dark"] .button-ghost { color: var(--accent-text); }
 html[data-theme="dark"] .topbar { background: var(--sidebar-bg); border-color: var(--border); }
 html[data-theme="dark"] .stat-label,
 html[data-theme="dark"] .panel-heading p { color: var(--text-muted); }
@@ -81,21 +106,53 @@ html[data-theme="dark"] .account-info small,
 html[data-theme="dark"] .account-balance small { color: var(--text-muted); }
 
 /* -------------------------------------------------------------- acessibilidade */
+/* Skip link: escondido por recorte (clip), não por posicionamento fora da tela.
+   Auditorias de acessibilidade tratam elemento posicionado em top:-60px como
+   "não focável", mesmo sendo alcançável pelo Tab. O padrão clip() esconde sem
+   tirar o elemento do fluxo de foco. */
 .skip-link {
-  position: absolute; left: 12px; top: -60px; z-index: 100;
-  padding: 10px 16px; border-radius: 8px;
-  background: var(--primary); color: #fff; font-weight: 700; text-decoration: none;
-  transition: top .2s;
+  position: absolute; z-index: 100;
+  left: -9999px; top: 0;
+  padding: 10px 16px;
+  background: var(--primary); color: #fff;
+  font-weight: 700; text-decoration: none; border-radius: 8px;
 }
-.skip-link:focus { top: 12px; }
+.skip-link:focus {
+  left: 12px; top: 12px;
+}
+
+/* O destino do skip link (#conteudo) só existe na view do app. Na tela de login
+   ele não teria para onde apontar — e o auditor o marca como não focável.
+   Sumir com ele ali é o comportamento correto: a tela de login tem um único
+   cartão e quase nada para pular. */
+body:has(#app-view.is-hidden) .skip-link { display: none; }
+
+/* O main recebe foco ao ser alvo do skip link; sem isso o navegador não rola
+   até ele. O anel some porque o foco veio de teclado sobre um container. */
+#conteudo:focus { outline: none; }
+
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 /* ------------------------------------------------------------------ shell */
 .page-content { display: flex; flex-direction: column; gap: 22px; }
 .view { display: flex; flex-direction: column; gap: 22px; }
 
+/* CRÍTICO: .page-content é um container flex em coluna, então cada .panel é um
+   flex item. Flex item tem min-width:auto por padrão, e esse mínimo é calculado
+   a partir do conteúdo — a table{min-width:650px} esticava o panel para 650px,
+   o panel esticava a coluna, e o overflow-x:auto do .table-wrap nunca chegava a
+   conter. Resultado: a página inteira rolava de lado no celular.
+   min-width:0 devolve ao flex item a permissão de encolher, e aí o wrapper
+   volta a rolar sozinho, como pretendido. */
+.page-content > *,
+.view > * { min-width: 0; }
+
 body.has-modal { overflow: hidden; }
 
+/* A sidebar é um drawer off-screen (left: -210px) no mobile. O scrim precisa
+   sair do fluxo normal (ele tem inset:0, o que o torna 100vw de largura) —
+   sem position:fixed, ele empurra o documento para 100vw + 210px e cria
+   scroll horizontal no mobile. */
 .sidebar-scrim {
   position: fixed; inset: 0; z-index: 55;
   background: rgba(10, 14, 30, .5);
@@ -143,7 +200,25 @@ body.has-modal { overflow: hidden; }
 .chart-box { position: relative; height: 240px; }
 .donut-wrap { position: relative; height: 240px; }
 
+/* styles.css escreve width:min(100% - 80px,1240px), mas min() só aceita
+   aritmética dentro de calc(). Sem o calc a declaração é inválida e
+   descartada — o max-width pretendido nunca foi aplicado e a área de conteúdo
+   ficou sem limite de largura no desktop. Aqui a versão que funciona. */
+.page-content {
+  width: min(calc(100% - 80px), 1240px);
+  margin: 0 auto;
+}
+@media (max-width: 800px) {
+  .page-content { width: calc(100% - 32px); }
+}
+
 /* ------------------------------------------------------------------- tabelas */
+/* styles.css fixa th em #9aa3b4 (2,54:1 no branco) — o pior contraste do app,
+   e é texto de cabeçalho, lido constantemente. O seletor precisa de
+   .table-wrap para empatar em especificidade com a regra original
+   (.table-wrap th = 0,1,1); um "th" sozinho (0,0,1) seria ignorado. */
+.table-wrap th { color: #667085; }
+
 .cell-main { display: flex; align-items: center; gap: 12px; }
 .cell-main > div { display: flex; flex-direction: column; line-height: 1.3; }
 .cell-main strong { font-size: .85rem; font-weight: 600; }

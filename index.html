@@ -16,7 +16,7 @@
   </head>
 
   <body>
-    <a class="skip-link" href="#page-title">Pular para o conteúdo</a>
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
     <!-- ======================================================= TELA DE LOGIN -->
     <section id="auth-view" class="login-view">
@@ -36,12 +36,12 @@
           </ul>
         </aside>
 
-        <div class="login-card">
+        <main class="login-card">
           <div class="brand brand-centered"><span class="brand-mark"><i class="fa-solid fa-chart-pie"></i></span><span>finora</span></div>
 
-          <div class="auth-tabs" role="tablist" aria-label="Escolha entre entrar e criar conta">
-            <button class="auth-tab active" type="button" data-auth-mode="login" role="tab" aria-pressed="true">Entrar</button>
-            <button class="auth-tab" type="button" data-auth-mode="register" role="tab" aria-pressed="false">Criar conta</button>
+          <div class="auth-tabs" role="group" aria-label="Escolha entre entrar e criar conta">
+            <button class="auth-tab active" type="button" data-auth-mode="login" aria-pressed="true">Entrar</button>
+            <button class="auth-tab" type="button" data-auth-mode="register" aria-pressed="false">Criar conta</button>
           </div>
 
           <p class="login-kicker">Bem-vindo</p>
@@ -105,7 +105,7 @@
             <i class="fa-solid fa-shield-halved"></i>
             Seus dados ficam apenas neste navegador. Não há servidor nem rastreamento.
           </p>
-        </div>
+        </main>
       </div>
     </section>
 
@@ -141,7 +141,7 @@
         </div>
       </aside>
 
-      <main class="main-content">
+      <main id="conteudo" class="main-content" tabindex="-1">
         <header class="topbar">
           <button id="menu-toggle" class="icon-button menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">
             <i class="fa-solid fa-bars"></i>
