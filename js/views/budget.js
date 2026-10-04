@@ -83,7 +83,7 @@ function budgetCard(budget, currency) {
     </article>`;
 }
 
-function saveBudgetFromForm() {
+async function saveBudgetFromForm() {
   const categoryId = $("#budget-category").value;
   const limit = parseAmount($("#budget-limit").value);
   if (!categoryId) return;
@@ -94,7 +94,7 @@ function saveBudgetFromForm() {
   const record = { id: createId(), categoryId, limit, month: budgetUi.month };
   const previous = state.budgets;
   state.budgets = [...state.budgets.filter((budget) => !(budget.month === record.month && budget.categoryId === categoryId)), record];
-  if (!persist("budgets")) {
+  if (!(await persist("budgets"))) {
     state.budgets = previous;
     toast("Não foi possível salvar o orçamento.", "error");
     return;
@@ -104,14 +104,14 @@ function saveBudgetFromForm() {
   renderBudget();
 }
 
-function deleteBudget(id) {
+async function deleteBudget(id) {
   const budget = state.budgets.find((item) => item.id === id);
   if (!budget) return;
   const name = categoryById(budget.categoryId)?.name ?? "orçamento";
   if (!confirm(`Remover o orçamento de ${name}?`)) return;
   const previous = state.budgets;
   state.budgets = state.budgets.filter((item) => item.id !== id);
-  if (!persist("budgets")) {
+  if (!(await persist("budgets"))) {
     state.budgets = previous;
     toast("Não foi possível remover.", "error");
     return;

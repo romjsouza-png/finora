@@ -44,7 +44,7 @@ function accountCard(account, currency) {
     </article>`;
 }
 
-function saveAccountFromForm() {
+async function saveAccountFromForm() {
   const id = $("#account-id").value;
   const name = $("#account-name").value.trim();
   const type = $("#account-type").value;
@@ -58,7 +58,7 @@ function saveAccountFromForm() {
     ? state.accounts.map((account) => (account.id === id ? { ...account, name, type, initialBalance, color } : account))
     : [...state.accounts, { id: createId(), name, type, initialBalance, color, archived: false }];
 
-  if (!persist("accounts")) {
+  if (!(await persist("accounts"))) {
     state.accounts = previous;
     return toast("Não foi possível salvar a conta.", "error");
   }
@@ -79,7 +79,7 @@ function openAccountModal(id = null) {
   openModal("account-modal");
 }
 
-function deleteAccount(id) {
+async function deleteAccount(id) {
   const account = accountById(id);
   if (!account) return;
   const linked = state.transactions.filter((item) => item.accountId === id).length;
@@ -95,7 +95,7 @@ function deleteAccount(id) {
 
   const previous = state.accounts;
   state.accounts = state.accounts.filter((item) => item.id !== id);
-  if (!persist("accounts")) {
+  if (!(await persist("accounts"))) {
     state.accounts = previous;
     return toast("Não foi possível excluir.", "error");
   }
@@ -122,11 +122,11 @@ function renderProfile() {
   $("#profile-accounts").textContent = state.accounts.length;
 }
 
-function saveProfileFromForm() {
+async function saveProfileFromForm() {
   const name = $("#profile-name").value.trim();
   if (!name) return toast("Informe seu nome.", "error");
   const patch = { name, currency: $("#profile-currency").value };
-  if (!saveProfile(patch)) return toast("Não foi possível salvar o perfil.", "error");
+  if (!(await saveProfile(patch))) return toast("Não foi possível salvar o perfil.", "error");
   $("#avatar").textContent = initials(name);
   $("#topbar-name").textContent = name;
   toast("Perfil atualizado.", "success");
@@ -157,7 +157,7 @@ function exportBackup() {
 /** Importa um backup. Substitui os dados atuais — por isso pede confirmação. */
 function importBackup(file) {
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     let data;
     try {
       data = JSON.parse(String(reader.result));
@@ -173,9 +173,10 @@ function importBackup(file) {
     state.transactions = data.transactions;
     state.budgets = Array.isArray(data.budgets) ? data.budgets : [];
     state.goals = Array.isArray(data.goals) ? data.goals : [];
-    if (data.profile) saveProfile({ name: data.profile.name, currency: data.profile.currency });
+    if (data.profile) await saveProfile({ name: data.profile.name, currency: data.profile.currency });
 
-    const ok = ["accounts", "transactions", "budgets", "goals"].every((key) => persist(key));
+    const results = await Promise.all(["accounts", "transactions", "budgets", "goals"].map((key) => persist(key)));
+    const ok = results.every(Boolean);
     toast(ok ? "Backup restaurado." : "Dados restaurados, mas a gravação falhou.", ok ? "success" : "error");
     navigate("dashboard");
   };

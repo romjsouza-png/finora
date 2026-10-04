@@ -44,6 +44,10 @@ const ACCOUNT_TYPES = [
 
 const state = {
   user: null,
+  workspaces: [],
+  currentWorkspaceId: null,
+  isPlatformAdmin: false,
+  remoteSnapshots: {},
   accounts: [],
   transactions: [],
   budgets: [],
@@ -76,13 +80,39 @@ function accountById(id) {
 
 // ---------------------------------------------------------------- persistência
 
-function loadUserData(user) {
+async function loadUserData(user, workspaceId = null) {
   state.user = user;
-  const prefix = (collection) => STORAGE.dataKey(user.id, collection);
-  state.accounts = readJson(prefix("accounts"), []);
-  state.transactions = readJson(prefix("transactions"), []);
-  state.budgets = readJson(prefix("budgets"), []);
-  state.goals = readJson(prefix("goals"), []);
+  if (typeof isSupabaseConfigured === "function" && isSupabaseConfigured()) {
+    const access = await supabaseListWorkspaces(user.id);
+    state.user = {
+      ...user,
+      name: access.profile?.display_name || user.name,
+      currency: access.profile?.currency ?? "BRL",
+    };
+    state.workspaces = access.workspaces;
+    state.isPlatformAdmin = access.isPlatformAdmin;
+    const workspace = state.workspaces.find((item) => item.id === workspaceId) ?? state.workspaces[0];
+    if (!workspace) throw new Error("Esta conta ainda não pertence a nenhum espaço.");
+    state.currentWorkspaceId = workspace.id;
+    const data = await supabaseLoadWorkspace(workspace.id);
+    state.accounts = data.accounts;
+    state.transactions = data.transactions;
+    state.budgets = data.budgets;
+    state.goals = data.goals;
+    state.remoteSnapshots = Object.fromEntries(
+      Object.entries(data).map(([key, records]) => [key, records.map((record) => ({ ...record }))])
+    );
+  } else {
+    state.workspaces = [];
+    state.currentWorkspaceId = null;
+    state.isPlatformAdmin = false;
+    state.remoteSnapshots = {};
+    const prefix = (collection) => STORAGE.dataKey(user.id, collection);
+    state.accounts = readJson(prefix("accounts"), []);
+    state.transactions = readJson(prefix("transactions"), []);
+    state.budgets = readJson(prefix("budgets"), []);
+    state.goals = readJson(prefix("goals"), []);
+  }
 
   if (!state.accounts.length) {
     state.accounts = [
@@ -95,18 +125,64 @@ function loadUserData(user) {
         archived: false,
       },
     ];
-    persist("accounts");
+    await persist("accounts");
   }
   emit();
 }
 
+async function switchWorkspace(workspaceId) {
+  const workspace = state.workspaces.find((item) => item.id === workspaceId);
+  if (!workspace || workspaceId === state.currentWorkspaceId) return true;
+  try {
+    const data = await supabaseLoadWorkspace(workspaceId);
+    state.currentWorkspaceId = workspaceId;
+    state.accounts = data.accounts;
+    state.transactions = data.transactions;
+    state.budgets = data.budgets;
+    state.goals = data.goals;
+    state.remoteSnapshots = Object.fromEntries(
+      Object.entries(data).map(([key, records]) => [key, records.map((record) => ({ ...record }))])
+    );
+    if (!state.accounts.length) {
+      state.accounts = [{ id: createId(), name: "Conta corrente", type: "checking", initialBalance: 0, color: "#5b5ce2", archived: false }];
+      await persist("accounts");
+    }
+    emit();
+    return true;
+  } catch (error) {
+    console.error("[finora] não foi possível trocar de espaço", error);
+    return false;
+  }
+}
+
 function persist(collection) {
   if (!state.user) return false;
+  if (typeof isSupabaseConfigured === "function" && isSupabaseConfigured()) {
+    if (!state.currentWorkspaceId) return false;
+    return supabaseSaveCollection(
+        collection,
+        state.currentWorkspaceId,
+        state[collection],
+        state.remoteSnapshots[collection] ?? []
+      )
+      .then((snapshot) => {
+        state.remoteSnapshots[collection] = snapshot;
+        return true;
+      })
+      .catch((error) => {
+        console.error(`[finora] não foi possível salvar ${collection} no Supabase`, error);
+        return false;
+      });
+  }
   return writeJson(STORAGE.dataKey(state.user.id, collection), state[collection]);
 }
 
 function clearUserData() {
   state.user = null;
+  state.workspaces = [];
+  state.currentWorkspaceId = null;
+  state.isPlatformAdmin = false;
+  state.remoteSnapshots = {};
   state.accounts = [];
   state.transactions = [];
   state.budgets = [];

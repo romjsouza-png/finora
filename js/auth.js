@@ -39,6 +39,19 @@ function findUserByEmail(users, email) {
 }
 
 async function register({ name, email, password }) {
+  if (typeof isSupabaseConfigured === "function" && isSupabaseConfigured()) {
+    try {
+      const result = await supabaseSignUp({ name, email: email.trim().toLowerCase(), password });
+      return {
+        ok: true,
+        user: result.user,
+        needsConfirmation: result.needsConfirmation,
+      };
+    } catch (error) {
+      return { ok: false, error: error.message || "Não foi possível criar a conta." };
+    }
+  }
+
   const users = readJson(STORAGE.USERS, []);
   if (findUserByEmail(users, email)) {
     return { ok: false, error: "Já existe uma conta com este e-mail." };
@@ -59,6 +72,15 @@ async function register({ name, email, password }) {
 }
 
 async function login({ email, password }) {
+  if (typeof isSupabaseConfigured === "function" && isSupabaseConfigured()) {
+    try {
+      const user = await supabaseSignIn({ email: email.trim().toLowerCase(), password });
+      return { ok: true, user };
+    } catch (error) {
+      return { ok: false, error: "E-mail ou senha incorretos." };
+    }
+  }
+
   const users = readJson(STORAGE.USERS, []);
   const user = findUserByEmail(users, email);
   if (!user) return { ok: false, error: "E-mail ou senha incorretos." };
@@ -85,11 +107,33 @@ function restoreSession() {
   return user ?? null;
 }
 
-function endSession() {
+async function endSession() {
+  if (typeof isSupabaseConfigured === "function" && isSupabaseConfigured()) {
+    try {
+      await supabaseSignOut();
+      return true;
+    } catch (error) {
+      console.error("[finora] não foi possível encerrar a sessão remota", error);
+      return false;
+    }
+  }
   remove(STORAGE.SESSION);
+  return true;
 }
 
-function saveProfile(patch) {
+async function saveProfile(patch) {
+  if (typeof isSupabaseConfigured === "function" && isSupabaseConfigured()) {
+    try {
+      await supabaseUpdateProfile(state.user.id, patch);
+      state.user = { ...state.user, ...patch };
+      emit();
+      return true;
+    } catch (error) {
+      console.error("[finora] não foi possível salvar o perfil no Supabase", error);
+      return false;
+    }
+  }
+
   const users = readJson(STORAGE.USERS, []);
   const index = users.findIndex((candidate) => candidate.id === state.user.id);
   if (index === -1) return false;

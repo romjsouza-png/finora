@@ -68,7 +68,7 @@ function deadlineLabel(deadline, done) {
   return `${days} dia(s) até o prazo`;
 }
 
-function saveGoalFromForm() {
+async function saveGoalFromForm() {
   const name = $("#goal-name").value.trim();
   const target = parseAmount($("#goal-target").value);
   const saved = parseAmount($("#goal-saved").value) || 0;
@@ -83,7 +83,7 @@ function saveGoalFromForm() {
     ...state.goals,
     { id: createId(), name, target, saved, deadline, createdAt: new Date().toISOString() },
   ];
-  if (!persist("goals")) {
+  if (!(await persist("goals"))) {
     state.goals = previous;
     return toast("Não foi possível salvar a meta.", "error");
   }
@@ -93,7 +93,7 @@ function saveGoalFromForm() {
 }
 
 /** Deposita um valor numa meta existente (fluxo rápido, sem abrir modal). */
-function addGoalSavings(id) {
+async function addGoalSavings(id) {
   const goal = state.goals.find((item) => item.id === id);
   if (!goal) return;
   const currency = state.user?.currency ?? "BRL";
@@ -105,7 +105,7 @@ function addGoalSavings(id) {
 
   const previous = state.goals;
   state.goals = state.goals.map((item) => (item.id === id ? { ...item, saved: item.saved + amount } : item));
-  if (!persist("goals")) {
+  if (!(await persist("goals"))) {
     state.goals = previous;
     return toast("Não foi possível atualizar a meta.", "error");
   }
@@ -113,13 +113,13 @@ function addGoalSavings(id) {
   renderGoals();
 }
 
-function deleteGoal(id) {
+async function deleteGoal(id) {
   const goal = state.goals.find((item) => item.id === id);
   if (!goal) return;
   if (!confirm(`Excluir a meta "${goal.name}"?`)) return;
   const previous = state.goals;
   state.goals = state.goals.filter((item) => item.id !== id);
-  if (!persist("goals")) {
+  if (!(await persist("goals"))) {
     state.goals = previous;
     return toast("Não foi possível excluir.", "error");
   }

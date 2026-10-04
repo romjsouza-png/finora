@@ -100,7 +100,7 @@ function openTransactionModal(transactionId = null) {
   openModal("transaction-modal");
 }
 
-function saveTransactionFromForm() {
+async function saveTransactionFromForm() {
   const error = $("#transaction-error");
   const id = $("#transaction-id").value;
   const amount = parseAmount($("#transaction-amount").value);
@@ -145,7 +145,7 @@ function saveTransactionFromForm() {
     ? state.transactions.map((item) => (item.id === id ? record : item))
     : [record, ...state.transactions];
 
-  if (!persist("transactions")) {
+  if (!(await persist("transactions"))) {
     state.transactions = previous;
     error.textContent = "Não foi possível salvar. Verifique o espaço disponível no navegador.";
     return;
@@ -156,12 +156,12 @@ function saveTransactionFromForm() {
   navigate(currentRoute);
 }
 
-function deleteTransaction(id) {
+async function deleteTransaction(id) {
   const transaction = state.transactions.find((item) => item.id === id);
   if (!transaction) return;
   const previous = state.transactions;
   state.transactions = state.transactions.filter((item) => item.id !== id);
-  if (!persist("transactions")) {
+  if (!(await persist("transactions"))) {
     state.transactions = previous;
     toast("Não foi possível excluir.", "error");
     return;
