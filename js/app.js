@@ -321,6 +321,7 @@ function wireEvents() {
     const button = event.target.closest("[data-action]");
     if (!button) return;
     if (button.dataset.action === "edit-account") openAccountModal(button.dataset.id);
+    if (button.dataset.action === "toggle-archive-account") toggleArchiveAccount(button.dataset.id);
     if (button.dataset.action === "delete-account") deleteAccount(button.dataset.id);
   });
 

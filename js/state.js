@@ -202,12 +202,19 @@ function accountBalance(account) {
   return (Number(account.initialBalance) || 0) + delta;
 }
 
+function activeAccounts() {
+  return state.accounts.filter((account) => !account.archived);
+}
+
 function totalBalance() {
-  return state.accounts.filter((account) => !account.archived).reduce((sum, account) => sum + accountBalance(account), 0);
+  return activeAccounts().reduce((sum, account) => sum + accountBalance(account), 0);
 }
 
 function transactionsInMonth(monthKey) {
-  return state.transactions.filter((transaction) => transaction.date.startsWith(monthKey));
+  const activeIds = state.accounts.length ? new Set(activeAccounts().map((account) => account.id)) : null;
+  return state.transactions.filter(
+    (transaction) => (!activeIds || activeIds.has(transaction.accountId)) && transaction.date.startsWith(monthKey)
+  );
 }
 
 function monthTotals(monthKey) {
@@ -241,16 +248,19 @@ function expensesByCategory(monthKey) {
 function balanceSeries(days, today = new Date()) {
   today = new Date(today);
   today.setHours(12, 0, 0, 0);
+  const activeIds = state.accounts.length ? new Set(activeAccounts().map((account) => account.id)) : null;
   const points = [];
   for (let offset = days - 1; offset >= 0; offset -= 1) {
     const day = addDays(today, -offset);
     const key = toDateKey(day);
-    const upto = state.transactions.filter((transaction) => transaction.date <= key);
+    const upto = state.transactions.filter(
+      (transaction) => (!activeIds || activeIds.has(transaction.accountId)) && transaction.date <= key
+    );
     const flow = upto.reduce(
       (sum, transaction) => sum + (transaction.type === "income" ? transaction.amount : -transaction.amount),
       0
     );
-    const opening = state.accounts.reduce((sum, account) => sum + (Number(account.initialBalance) || 0), 0);
+    const opening = activeAccounts().reduce((sum, account) => sum + (Number(account.initialBalance) || 0), 0);
     points.push({ date: key, value: opening + flow });
   }
   return points;

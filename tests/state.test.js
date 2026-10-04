@@ -11,7 +11,7 @@ const assert = require("node:assert");
 const { loadApp, withUser, txn, account } = require("./helper");
 
 const { api } = loadApp();
-const { accountBalance, totalBalance, monthTotals, expensesByCategory, budgetUsage, incomeExpenseByMonth, persist, state } = api;
+const { accountBalance, totalBalance, monthTotals, expensesByCategory, balanceSeries, budgetUsage, incomeExpenseByMonth, persist, state } = api;
 
 test("saldo da conta soma receitas e subtrai despesas", () => {
   withUser(api, {
@@ -85,6 +85,24 @@ test("totalBalance ignora contas arquivadas", () => {
     transactions: [],
   });
   assert.strictEqual(totalBalance(), 100, "conta arquivada não entra no consolidado");
+});
+
+test("balanceSeries e monthTotals ignoram contas arquivadas no consolidado", () => {
+  withUser(api, {
+    accounts: [
+      account({ id: "a1", initialBalance: 100 }),
+      account({ id: "a2", initialBalance: 500, archived: true }),
+    ],
+    transactions: [
+      txn({ accountId: "a1", type: "income", amount: 50, date: "2026-03-02" }),
+      txn({ accountId: "a2", type: "income", amount: 1000, date: "2026-03-03" }),
+    ],
+  });
+
+  assert.strictEqual(monthTotals("2026-03").income, 50, "somente contas ativas contam no total do mês");
+  const points = balanceSeries(2, new Date(2026, 2, 3, 12, 0, 0));
+  assert.strictEqual(points[0].value, 150, "o início do acumulado ignora a conta arquivada");
+  assert.strictEqual(points[1].value, 150, "jamais a conta arquivada entra na linha principal do saldo");
 });
 
 test("monthTotals separa receita, despesa e resultado", () => {

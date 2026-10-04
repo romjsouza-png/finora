@@ -22,6 +22,9 @@ function renderAccounts() {
 function accountCard(account, currency) {
   const balance = accountBalance(account);
   const count = state.transactions.filter((item) => item.accountId === account.id).length;
+  const archiveLabel = account.archived ? "Desarquivar" : "Arquivar";
+  const archiveIcon = account.archived ? "fa-box-open" : "fa-archive";
+
   return `
     <article class="panel account-card ${account.archived ? "is-archived" : ""}">
       <span class="account-color" style="background:${escapeHtml(account.color)}"></span>
@@ -36,6 +39,9 @@ function accountCard(account, currency) {
       <div class="row-actions">
         <button class="row-action" data-action="edit-account" data-id="${escapeHtml(account.id)}" title="Editar" aria-label="Editar conta ${escapeHtml(account.name)}">
           <i class="fa-solid fa-pen"></i>
+        </button>
+        <button class="row-action" data-action="toggle-archive-account" data-id="${escapeHtml(account.id)}" title="${archiveLabel}" aria-label="${archiveLabel} conta ${escapeHtml(account.name)}">
+          <i class="fa-solid ${archiveIcon}"></i>
         </button>
         <button class="row-action delete" data-action="delete-account" data-id="${escapeHtml(account.id)}" title="Excluir" aria-label="Excluir conta ${escapeHtml(account.name)}">
           <i class="fa-solid fa-trash-can"></i>
@@ -79,6 +85,24 @@ function openAccountModal(id = null) {
   openModal("account-modal");
 }
 
+async function toggleArchiveAccount(id) {
+  const account = accountById(id);
+  if (!account) return;
+
+  const previous = state.accounts.map((item) => ({ ...item }));
+  state.accounts = state.accounts.map((item) =>
+    item.id === id ? { ...item, archived: !Boolean(item.archived) } : item
+  );
+
+  if (!(await persist("accounts"))) {
+    state.accounts = previous;
+    return toast("Não foi possível atualizar o status da conta.", "error");
+  }
+
+  toast(account.archived ? "Conta reativada." : "Conta arquivada.", "success");
+  renderAccounts();
+}
+
 async function deleteAccount(id) {
   const account = accountById(id);
   if (!account) return;
@@ -87,8 +111,8 @@ async function deleteAccount(id) {
     toast(`Não é possível excluir: ${linked} lançamento(s) usam esta conta.`, "error");
     return;
   }
-  if (state.accounts.length === 1) {
-    toast("É preciso manter ao menos uma conta.", "error");
+  if (state.accounts.filter((item) => !item.archived).length === 1 && !account.archived) {
+    toast("É preciso manter ao menos uma conta ativa.", "error");
     return;
   }
   if (!confirm(`Excluir a conta "${account.name}"?`)) return;
