@@ -224,9 +224,56 @@ async function supabaseCreateGroup(name) {
   return data;
 }
 
+async function supabaseLoadFollowedAccounts(userId) {
+  const client = requireSupabase();
+  const { data: follows, error: followsError } = await client
+    .from("account_followers")
+    .select("accounts(*)")
+    .eq("user_id", userId);
+  if (followsError) throw followsError;
+
+  const accounts = (follows ?? [])
+    .map((follow) => follow.accounts)
+    .filter(Boolean)
+    .map(SUPABASE_COLLECTIONS.accounts.fromRow);
+  if (!accounts.length) return { accounts, transactions: [] };
+
+  const { data: transactions, error: transactionsError } = await client
+    .from("transactions")
+    .select("*")
+    .in("account_id", accounts.map((account) => account.id))
+    .order("date", { ascending: false });
+  if (transactionsError) throw transactionsError;
+  return {
+    accounts,
+    transactions: (transactions ?? []).map(SUPABASE_COLLECTIONS.transactions.fromRow),
+  };
+}
+
+async function supabaseManageAccess(body) {
+  const { data, error } = await requireSupabase().functions.invoke("access-management", { body });
+  if (error) {
+    if (error.context instanceof Response) {
+      const response = await error.context.json().catch(() => null);
+      if (response?.error) throw new Error(response.error);
+    }
+    throw error;
+  }
+  return data;
+}
+
 async function supabaseInviteToWorkspace(email, workspaceId) {
-  const { error } = await requireSupabase().functions.invoke("admin-invite-user", {
-    body: { email, workspaceId },
-  });
-  if (error) throw error;
+  return supabaseManageAccess({ action: "invite_workspace_member", email, workspaceId });
+}
+
+async function supabaseGrantAccountFollow(email, accountId) {
+  return supabaseManageAccess({ action: "follow_account", email, accountId });
+}
+
+async function supabaseRevokeAccountFollow(email, accountId) {
+  return supabaseManageAccess({ action: "revoke_account_follow", email, accountId });
+}
+
+async function supabasePromotePlatformAdmin(email) {
+  return supabaseManageAccess({ action: "promote_platform_admin", email });
 }

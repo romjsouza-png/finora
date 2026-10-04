@@ -48,6 +48,8 @@ const state = {
   currentWorkspaceId: null,
   isPlatformAdmin: false,
   remoteSnapshots: {},
+  followedAccounts: [],
+  followedTransactions: [],
   accounts: [],
   transactions: [],
   budgets: [],
@@ -82,6 +84,8 @@ function accountById(id) {
 
 async function loadUserData(user, workspaceId = null) {
   state.user = user;
+  state.followedAccounts = [];
+  state.followedTransactions = [];
   if (typeof isSupabaseConfigured === "function" && isSupabaseConfigured()) {
     const access = await supabaseListWorkspaces(user.id);
     state.user = {
@@ -99,6 +103,9 @@ async function loadUserData(user, workspaceId = null) {
     state.transactions = data.transactions;
     state.budgets = data.budgets;
     state.goals = data.goals;
+    const followed = await supabaseLoadFollowedAccounts(user.id);
+    state.followedAccounts = followed.accounts;
+    state.followedTransactions = followed.transactions;
     state.remoteSnapshots = Object.fromEntries(
       Object.entries(data).map(([key, records]) => [key, records.map((record) => ({ ...record }))])
     );
@@ -107,6 +114,8 @@ async function loadUserData(user, workspaceId = null) {
     state.currentWorkspaceId = null;
     state.isPlatformAdmin = false;
     state.remoteSnapshots = {};
+    state.followedAccounts = [];
+    state.followedTransactions = [];
     const prefix = (collection) => STORAGE.dataKey(user.id, collection);
     state.accounts = readJson(prefix("accounts"), []);
     state.transactions = readJson(prefix("transactions"), []);
@@ -183,6 +192,8 @@ function clearUserData() {
   state.currentWorkspaceId = null;
   state.isPlatformAdmin = false;
   state.remoteSnapshots = {};
+  state.followedAccounts = [];
+  state.followedTransactions = [];
   state.accounts = [];
   state.transactions = [];
   state.budgets = [];

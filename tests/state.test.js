@@ -87,6 +87,24 @@ test("totalBalance ignora contas arquivadas", () => {
   assert.strictEqual(totalBalance(), 100, "conta arquivada não entra no consolidado");
 });
 
+test("acompanhamentos individuais não entram nos totais financeiros pessoais", () => {
+  withUser(api, {
+    accounts: [account({ id: "pessoal", initialBalance: 100 })],
+    transactions: [txn({ accountId: "pessoal", amount: 10, date: "2026-03-12" })],
+  });
+  state.followedAccounts = [account({ id: "acompanhada", initialBalance: 900 })];
+  state.followedTransactions = [
+    txn({ accountId: "acompanhada", type: "income", amount: 8000, date: "2026-03-15" }),
+  ];
+
+  assert.strictEqual(totalBalance(), 90);
+  const totals = monthTotals("2026-03");
+  assert.strictEqual(totals.income, 0);
+  assert.strictEqual(totals.expense, 10);
+  assert.strictEqual(totals.result, -10);
+  assert.strictEqual(balanceSeries(1, new Date(2026, 2, 15, 12, 0, 0))[0].value, 90);
+});
+
 test("balanceSeries e monthTotals ignoram contas arquivadas no consolidado", () => {
   withUser(api, {
     accounts: [

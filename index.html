@@ -28,7 +28,7 @@
           <div class="brand"><span class="brand-mark"><i class="fa-solid fa-chart-pie"></i></span><span>finora</span></div>
           <div class="visual-badge">Financeiro inteligente</div>
           <h2>Organize seu dinheiro com clareza e segurança.</h2>
-          <p>Lançamentos, orçamento, metas e contas em um só lugar — tudo salvo no seu navegador.</p>
+          <p>Lançamentos, orçamento, metas e contas em um só lugar, com armazenamento local ou compartilhado.</p>
           <ul class="login-benefits">
             <li><i class="fa-solid fa-check"></i> Receitas e despesas com saldo consolidado</li>
             <li><i class="fa-solid fa-check"></i> Orçamentos por categoria e metas de economia</li>
@@ -103,7 +103,7 @@
 
           <p class="privacy-note">
             <i class="fa-solid fa-shield-halved"></i>
-            Seus dados ficam apenas neste navegador. Não há servidor nem rastreamento.
+            O armazenamento depende da configuração: local neste navegador ou na instância Supabase do aplicativo.
           </p>
         </main>
       </div>
@@ -126,6 +126,7 @@
           <a class="nav-item" href="#goals" data-route="goals"><i class="fa-solid fa-rocket"></i>Metas</a>
           <p class="nav-title">Configurações</p>
           <a class="nav-item" href="#accounts" data-route="accounts"><i class="fa-solid fa-building-columns"></i>Contas</a>
+          <a class="nav-item" href="#following" data-route="following"><i class="fa-solid fa-eye"></i>Acompanhamentos</a>
           <a class="nav-item" href="#profile" data-route="profile"><i class="fa-solid fa-user"></i>Perfil</a>
         </nav>
 
@@ -395,6 +396,17 @@
             </section>
           </section>
 
+          <!-- ---------------------------------------------- ACOMPANHAMENTOS -->
+          <section class="view is-hidden" data-view="following">
+            <section class="panel">
+              <div class="panel-heading">
+                <div><h2>Contas acompanhadas</h2><p>Acesso individual somente para leitura</p></div>
+              </div>
+              <p id="following-notice" class="field-hint"></p>
+              <div class="following-list" id="following-list"></div>
+            </section>
+          </section>
+
           <!-- ------------------------------------------------------- PERFIL -->
           <section class="view is-hidden" data-view="profile">
             <div class="profile-grid">
@@ -431,8 +443,8 @@
                   <div><dt>Contas</dt><dd id="profile-accounts">0</dd></div>
                 </dl>
                 <p class="field-hint">
-                  Os dados vivem no <code>localStorage</code> deste navegador. Limpar os dados de navegação
-                  apaga tudo — exporte um backup antes.
+                  A persistência é local ou via Supabase, conforme a configuração. No modo local, limpar os dados
+                  de navegação apaga tudo — exporte um backup antes.
                 </p>
                 <div class="panel-actions">
                   <button id="profile-export" class="button button-secondary" type="button"><i class="fa-solid fa-download"></i> Exportar backup</button>
@@ -441,6 +453,38 @@
                   </label>
                   <input id="profile-import" type="file" accept="application/json" class="sr-only" />
                 </div>
+              </section>
+
+              <section class="panel workspace-panel">
+                <div class="panel-heading">
+                  <div><h2>Grupos e acessos</h2><p>Gerencie espaços compartilhados e permissões</p></div>
+                </div>
+                <p id="workspace-access-notice" class="field-hint"></p>
+                <div class="field">
+                  <label for="profile-workspace">Espaço ativo</label>
+                  <select id="profile-workspace"></select>
+                </div>
+                <form id="group-create-form" class="form-grid is-hidden">
+                  <div class="field">
+                    <label for="group-name">Nome do novo grupo</label>
+                    <input id="group-name" type="text" maxlength="80" required />
+                  </div>
+                  <button class="button button-primary" type="submit">Criar grupo</button>
+                </form>
+                <form id="platform-admin-form" class="form-grid is-hidden">
+                  <div class="field">
+                    <label for="platform-admin-email">E-mail do novo administrador</label>
+                    <input id="platform-admin-email" type="email" autocomplete="email" required />
+                  </div>
+                  <button class="button button-secondary" type="submit">Conceder acesso admin</button>
+                </form>
+                <form id="group-invite-form" class="form-grid is-hidden">
+                  <div class="field">
+                    <label for="group-invite-email">E-mail para convidar ao grupo</label>
+                    <input id="group-invite-email" type="email" autocomplete="email" required />
+                  </div>
+                  <button class="button button-secondary" type="submit">Convidar membro</button>
+                </form>
               </section>
             </div>
           </section>
@@ -531,6 +575,37 @@
             <button class="button button-secondary" type="button" data-close-modal>Cancelar</button>
             <button class="button button-primary" type="submit">Salvar</button>
           </div>
+        </form>
+      </section>
+    </div>
+
+    <div id="account-follow-modal" class="modal-backdrop is-hidden">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="account-follow-modal-title">
+        <div class="modal-heading">
+          <div><p class="eyebrow">Acompanhamento individual</p><h2 id="account-follow-modal-title">Liberar acompanhamento</h2></div>
+          <button class="icon-button" type="button" data-close-modal aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="account-follow-form">
+          <input id="account-follow-id" type="hidden" />
+          <p id="account-follow-name" class="field-hint"></p>
+          <div class="field">
+            <label for="account-follow-email">E-mail da pessoa</label>
+            <input id="account-follow-email" type="email" autocomplete="email" required />
+            <small class="field-hint">A pessoa receberá um convite se ainda não tiver uma conta. O acesso é somente de leitura e limitado a esta conta.</small>
+          </div>
+          <p id="account-follow-error" class="form-error" role="alert"></p>
+          <div class="modal-actions">
+            <button class="button button-secondary" type="button" data-close-modal>Cancelar</button>
+            <button class="button button-primary" type="submit">Liberar acesso</button>
+          </div>
+        </form>
+        <form id="account-follow-revoke-form" class="account-follow-revoke-form">
+          <div class="field">
+            <label for="account-follow-revoke-email">Revogar pelo e-mail</label>
+            <input id="account-follow-revoke-email" type="email" autocomplete="email" required />
+          </div>
+          <button class="button button-secondary" type="submit">Revogar acompanhamento</button>
+          <p id="account-follow-revoke-error" class="form-error" role="alert"></p>
         </form>
       </section>
     </div>

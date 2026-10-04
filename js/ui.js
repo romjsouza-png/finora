@@ -11,6 +11,7 @@ const ROUTES = {
   budget: { title: "Orçamento", icon: "fa-solid fa-bullseye", render: () => renderBudget() },
   goals: { title: "Metas", icon: "fa-solid fa-rocket", render: () => renderGoals() },
   accounts: { title: "Contas", icon: "fa-solid fa-building-columns", render: () => renderAccounts() },
+  following: { title: "Acompanhamentos", icon: "fa-solid fa-eye", render: () => renderFollowings() },
   profile: { title: "Perfil", icon: "fa-solid fa-user", render: () => renderProfile() },
 };
 

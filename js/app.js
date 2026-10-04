@@ -121,7 +121,10 @@ function showAuthView() {
 
 function showApp(user) {
   app.isAuthenticated = true;
-  loadUserData(user);
+  loadUserData(user).catch((error) => {
+    console.error("[finora] não foi possível carregar os espaços do usuário", error);
+    toast("Não foi possível carregar seus dados compartilhados. Confira a configuração do Supabase e as migrações.", "error");
+  });
   $("#auth-view").classList.add("is-hidden");
   $("#app-view").classList.remove("is-hidden");
   $("#avatar").textContent = initials(user.name);
@@ -198,6 +201,134 @@ function logout() {
   endSession();
   showAuthView();
   toast("Sessão encerrada.");
+}
+
+function openAccountFollowModal(accountId) {
+  const account = accountById(accountId);
+  if (!account) return;
+  if (!isSupabaseConfigured()) {
+    toast("Configure o Supabase para liberar acompanhamento entre usuários.", "error");
+    return;
+  }
+  $("#account-follow-id").value = account.id;
+  $("#account-follow-name").textContent = `Conta: ${account.name}`;
+  $("#account-follow-email").value = "";
+  $("#account-follow-error").textContent = "";
+  $("#account-follow-revoke-form").reset();
+  $("#account-follow-revoke-error").textContent = "";
+  openModal("account-follow-modal");
+}
+
+async function handleCreateGroup(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = $("button[type=submit]", form);
+  const name = $("#group-name").value.trim();
+  if (!state.isPlatformAdmin) return toast("Somente um administrador da plataforma pode criar grupos.", "error");
+  if (!name) return toast("Informe o nome do grupo.", "error");
+  button.disabled = true;
+  try {
+    const workspaceId = await supabaseCreateGroup(name);
+    const access = await supabaseListWorkspaces(state.user.id);
+    state.workspaces = access.workspaces;
+    state.isPlatformAdmin = access.isPlatformAdmin;
+    if (!(await switchWorkspace(workspaceId))) throw new Error("O grupo foi criado, mas não foi possível abri-lo.");
+    form.reset();
+    toast("Grupo criado.", "success");
+  } catch (error) {
+    console.error("[finora] não foi possível criar o grupo", error);
+    toast(error.message || "Não foi possível criar o grupo.", "error");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function handleInviteGroupMember(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = $("button[type=submit]", form);
+  const email = $("#group-invite-email").value.trim().toLowerCase();
+  const workspace = state.workspaces.find((item) => item.id === state.currentWorkspaceId);
+  if (!workspace || workspace.kind !== "group") return toast("Selecione um grupo antes de convidar membros.", "error");
+  button.disabled = true;
+  try {
+    const result = await supabaseInviteToWorkspace(email, workspace.id);
+    form.reset();
+    toast(result?.invited ? "Convite enviado para o novo usuário." : "Usuário adicionado ao grupo.", "success");
+  } catch (error) {
+    console.error("[finora] não foi possível convidar o membro", error);
+    toast(error.message || "Não foi possível convidar o membro.", "error");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function handlePromotePlatformAdmin(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = $("button[type=submit]", form);
+  const email = $("#platform-admin-email").value.trim().toLowerCase();
+  if (!state.isPlatformAdmin) return toast("Somente um administrador da plataforma pode conceder esse acesso.", "error");
+  button.disabled = true;
+  try {
+    const result = await supabasePromotePlatformAdmin(email);
+    form.reset();
+    toast(
+      result?.invited ? "Convite enviado; o usuário receberá acesso de administrador ao ativar a conta." : "Acesso de administrador concedido.",
+      "success"
+    );
+  } catch (error) {
+    console.error("[finora] não foi possível conceder acesso de administrador", error);
+    toast(error.message || "Não foi possível conceder o acesso.", "error");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function handleAccountFollow(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = $("button[type=submit]", form);
+  const errorElement = $("#account-follow-error");
+  const accountId = $("#account-follow-id").value;
+  const email = $("#account-follow-email").value.trim().toLowerCase();
+  errorElement.textContent = "";
+  button.disabled = true;
+  try {
+    const result = await supabaseGrantAccountFollow(email, accountId);
+    closeModal();
+    form.reset();
+    toast(
+      result?.invited ? "Convite enviado com acesso somente a esta conta." : "Acompanhamento individual liberado.",
+      "success"
+    );
+  } catch (error) {
+    console.error("[finora] não foi possível liberar o acompanhamento", error);
+    errorElement.textContent = error.message || "Não foi possível liberar o acompanhamento.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function handleAccountFollowRevoke(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = $("button[type=submit]", form);
+  const errorElement = $("#account-follow-revoke-error");
+  const accountId = $("#account-follow-id").value;
+  const email = $("#account-follow-revoke-email").value.trim().toLowerCase();
+  errorElement.textContent = "";
+  button.disabled = true;
+  try {
+    await supabaseRevokeAccountFollow(email, accountId);
+    form.reset();
+    toast("Acompanhamento revogado.", "success");
+  } catch (error) {
+    console.error("[finora] não foi possível revogar o acompanhamento", error);
+    errorElement.textContent = error.message || "Não foi possível revogar o acompanhamento.";
+  } finally {
+    button.disabled = false;
+  }
 }
 
 // ------------------------------------------------------------------------ init
@@ -323,9 +454,23 @@ function wireEvents() {
     if (button.dataset.action === "edit-account") openAccountModal(button.dataset.id);
     if (button.dataset.action === "toggle-archive-account") toggleArchiveAccount(button.dataset.id);
     if (button.dataset.action === "delete-account") deleteAccount(button.dataset.id);
+    if (button.dataset.action === "follow-account") openAccountFollowModal(button.dataset.id);
   });
 
   // Perfil
+  $("#profile-workspace").addEventListener("change", async (event) => {
+    if (!(await switchWorkspace(event.target.value))) {
+      toast("Não foi possível trocar de espaço.", "error");
+      renderProfile();
+      return;
+    }
+    toast("Espaço alterado.", "success");
+  });
+  $("#group-create-form").addEventListener("submit", handleCreateGroup);
+  $("#group-invite-form").addEventListener("submit", handleInviteGroupMember);
+  $("#platform-admin-form").addEventListener("submit", handlePromotePlatformAdmin);
+  $("#account-follow-form").addEventListener("submit", handleAccountFollow);
+  $("#account-follow-revoke-form").addEventListener("submit", handleAccountFollowRevoke);
   $("#profile-form").addEventListener("submit", (event) => {
     event.preventDefault();
     saveProfileFromForm();

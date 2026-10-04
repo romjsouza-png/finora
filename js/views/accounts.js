@@ -43,11 +43,88 @@ function accountCard(account, currency) {
         <button class="row-action" data-action="toggle-archive-account" data-id="${escapeHtml(account.id)}" title="${archiveLabel}" aria-label="${archiveLabel} conta ${escapeHtml(account.name)}">
           <i class="fa-solid ${archiveIcon}"></i>
         </button>
+        <button class="row-action" data-action="follow-account" data-id="${escapeHtml(account.id)}" title="Liberar acompanhamento" aria-label="Liberar acompanhamento da conta ${escapeHtml(account.name)}">
+          <i class="fa-solid fa-eye"></i>
+        </button>
         <button class="row-action delete" data-action="delete-account" data-id="${escapeHtml(account.id)}" title="Excluir" aria-label="Excluir conta ${escapeHtml(account.name)}">
           <i class="fa-solid fa-trash-can"></i>
         </button>
       </div>
     </article>`;
+}
+
+function renderFollowings() {
+  const list = $("#following-list");
+  if (!isSupabaseConfigured()) {
+    $("#following-notice").textContent =
+      "Acompanhamento entre pessoas exige Supabase configurado. O modo local guarda os dados apenas neste navegador.";
+    list.innerHTML = "";
+    return;
+  }
+
+  $("#following-notice").textContent =
+    "As contas liberadas aparecem aqui em modo somente leitura e não entram nos seus próprios totais.";
+  list.innerHTML = state.followedAccounts.length
+    ? state.followedAccounts.map((account) => {
+        const transactions = state.followedTransactions
+          .filter((item) => item.accountId === account.id)
+          .sort((a, b) => b.date.localeCompare(a.date));
+        const balance = transactions.reduce(
+          (sum, item) => sum + (item.type === "income" ? item.amount : -item.amount),
+          Number(account.initialBalance) || 0
+        );
+        const recent = transactions.slice(0, 8);
+        return `
+          <article class="panel following-card">
+            <div class="following-card-heading">
+              <span class="account-color" style="background:${escapeHtml(account.color)}"></span>
+              <div class="account-info">
+                <strong>${escapeHtml(account.name)}</strong>
+                <small>${escapeHtml(ACCOUNT_TYPES.find((type) => type.id === account.type)?.name ?? account.type)} · ${transactions.length} lançamento(s)</small>
+              </div>
+              <div class="account-balance">
+                <strong>${formatCurrency(balance, state.user?.currency ?? "BRL")}</strong>
+                <small>saldo acompanhado</small>
+              </div>
+            </div>
+            ${recent.length
+              ? `<ul class="following-transactions">${recent.map((item) => `
+                  <li>
+                    <span>${escapeHtml(item.description || categoryById(item.categoryId)?.name || "Lançamento")}<small>${formatDate(item.date)}</small></span>
+                    <strong class="${item.type === "income" ? "is-income" : "is-expense"}">${item.type === "income" ? "+" : "−"}${formatCurrency(item.amount, state.user?.currency ?? "BRL")}</strong>
+                  </li>`).join("")}</ul>`
+              : `<p class="field-hint">Ainda não há lançamentos nesta conta.</p>`}
+          </article>`;
+      }).join("")
+    : `<div class="empty-state">
+         <i class="fa-solid fa-eye"></i>
+         <strong>Nenhuma conta acompanhada</strong>
+         <span>Quando alguém liberar uma conta para você, ela aparecerá aqui.</span>
+       </div>`;
+}
+
+function renderWorkspaceAccess() {
+  const configured = isSupabaseConfigured();
+  const workspaceSelect = $("#profile-workspace");
+  workspaceSelect.innerHTML = state.workspaces
+    .map((workspace) => `<option value="${escapeHtml(workspace.id)}">${escapeHtml(workspace.name)} · ${escapeHtml(workspace.role)}</option>`)
+    .join("");
+  workspaceSelect.value = state.currentWorkspaceId ?? "";
+  workspaceSelect.disabled = !configured || state.workspaces.length < 2;
+
+  const currentWorkspace = state.workspaces.find((workspace) => workspace.id === state.currentWorkspaceId);
+  const canManageGroup = state.isPlatformAdmin || ["owner", "admin"].includes(currentWorkspace?.role);
+  $("#workspace-access-notice").textContent = !configured
+    ? "Ative o Supabase para compartilhar dados entre usuários. O primeiro administrador da plataforma deve ser habilitado no SQL Editor do Supabase; depois disso, administradores podem conceder acesso pela tela."
+    : currentWorkspace
+      ? `Espaço atual: ${currentWorkspace.name} (${currentWorkspace.kind === "group" ? "grupo" : "pessoal"}).`
+      : "Nenhum espaço disponível para esta conta.";
+  $("#group-create-form").classList.toggle("is-hidden", !configured || !state.isPlatformAdmin);
+  $("#platform-admin-form").classList.toggle("is-hidden", !configured || !state.isPlatformAdmin);
+  $("#group-invite-form").classList.toggle(
+    "is-hidden",
+    !configured || currentWorkspace?.kind !== "group" || !canManageGroup
+  );
 }
 
 async function saveAccountFromForm() {
@@ -131,6 +208,7 @@ async function deleteAccount(id) {
 
 function renderProfile() {
   renderAccounts();
+  renderWorkspaceAccess();
   const user = state.user;
   $("#profile-name").value = user.name;
   $("#profile-email").value = user.email;

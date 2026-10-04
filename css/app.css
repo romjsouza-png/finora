@@ -331,6 +331,17 @@ tbody tr:hover { background: var(--surface-3); }
 
 /* ------------------------------------------------------------------- perfil */
 .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+.workspace-panel { grid-column: 1 / -1; }
+.workspace-panel form { margin-top: 16px; }
+.following-list { display: grid; gap: 14px; margin-top: 18px; }
+.following-card { display: flex; flex-direction: column; gap: 14px; }
+.following-card-heading { display: flex; align-items: center; gap: 12px; }
+.following-transactions { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.following-transactions li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); font-size: .78rem; }
+.following-transactions li span { display: flex; flex-direction: column; gap: 3px; }
+.following-transactions li small { color: var(--text-muted); font-size: .7rem; }
+.following-transactions li strong { white-space: nowrap; }
+.account-follow-revoke-form { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
 .detail-list { display: flex; flex-direction: column; gap: 10px; margin: 0 0 16px; }
 .detail-list > div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .detail-list dt { color: var(--text-muted); font-size: .82rem; }
@@ -383,6 +394,8 @@ tbody tr:hover { background: var(--surface-3); }
   .topbar-date { display: none; }
   .topbar-actions #header-new-transaction { padding: 10px 12px; font-size: .78rem; }
   .profile-text { display: none; }
+  .account-card { flex-wrap: wrap; }
+  .row-actions { margin-left: auto; }
   .panel-heading { flex-direction: column; align-items: flex-start; }
   .account-card { flex-wrap: wrap; }
   .account-balance { align-items: flex-start; width: 100%; }

@@ -91,6 +91,8 @@ function withUser(api, { accounts = [], transactions = [], budgets = [], goals =
   api.state.transactions = transactions;
   api.state.budgets = budgets;
   api.state.goals = goals;
+  api.state.followedAccounts = [];
+  api.state.followedTransactions = [];
   return api;
 }
 
