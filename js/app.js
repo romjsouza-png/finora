@@ -119,12 +119,15 @@ function showAuthView() {
   switchAuthMode("login");
 }
 
-function showApp(user) {
+async function showApp(user) {
+  if (!user) throw new Error("Não foi possível identificar a sessão do usuário.");
   app.isAuthenticated = true;
-  loadUserData(user).catch((error) => {
-    console.error("[finora] não foi possível carregar os espaços do usuário", error);
-    toast("Não foi possível carregar seus dados compartilhados. Confira a configuração do Supabase e as migrações.", "error");
-  });
+  try {
+    await loadUserData(user);
+  } catch (error) {
+    app.isAuthenticated = false;
+    throw error;
+  }
   $("#auth-view").classList.add("is-hidden");
   $("#app-view").classList.remove("is-hidden");
   $("#avatar").textContent = initials(user.name);
@@ -179,10 +182,15 @@ async function handleAuthSubmit(event, mode) {
     if (!result.ok) throw new Error(result.error);
 
     form.reset();
-    showApp(result.user);
+    if (mode === "register" && result.needsConfirmation) {
+      switchAuthMode("login");
+      toast("Conta criada. Confirme seu e-mail para entrar.", "success");
+      return;
+    }
+    await showApp(result.user);
     // O seed precisa rodar DEPOIS de showApp: é loadUserData() que cria a
     // conta corrente padrão, e seedDemoData() depende dela para existir.
-    if (mode === "register") {
+    if (mode === "register" && !isSupabaseConfigured()) {
       seedDemoData();
       navigate("dashboard");
       toast("Conta criada! Carregamos um mês de dados de exemplo para você explorar.", "success");
@@ -495,9 +503,27 @@ function init() {
     if (app.isAuthenticated) ROUTES[currentRoute]?.render();
   });
 
+  if (isSupabaseConfigured()) {
+    supabaseGetSessionUser()
+      .then((user) => (user ? showApp(user) : showAuthView()))
+      .catch((error) => {
+        console.error("[finora] não foi possível recuperar a sessão do Supabase", error);
+        showAuthView();
+        toast("Não foi possível recuperar sua sessão Supabase.", "error");
+      });
+    return;
+  }
+
   const user = restoreSession();
-  if (user) showApp(user);
-  else showAuthView();
+  if (user) {
+    showApp(user).catch((error) => {
+      console.error("[finora] não foi possível carregar os dados locais", error);
+      showAuthView();
+      toast("Não foi possível carregar os dados da conta.", "error");
+    });
+  } else {
+    showAuthView();
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);
